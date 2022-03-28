@@ -17,6 +17,10 @@ class DrawTexture{
         this.canvas.addEventListener( "pointerdown", this.onPointerDown.bind( this ) );
     }
 
+    setColor( c ){
+        this.draw.fill( c );
+    }
+
     atPos( x, y ){
         this.draw.circle( x, y, this.brushSize );
         this.tex.needsUpdate = true;

@@ -1,18 +1,19 @@
 <!DOCTYPE html><html><head><title></title></head><body><script type="module">
 import Starter, { THREE }   from "./lib/Starter.js";
-import DrawTexture			from "./lib/DrawTexture.js";
-import FboPixel 			from "./lib/FboPixel.js";
-import Canvas               from "./lib/Canvas.js";
-
 import GltfUtil             from "./lib/GltfUtil.js";
-
+import { Editor }           from './editor.js';
+import { 
+    PropStackPanel, PropInputRange, PropColorPicker,
+} from './ui/index.js';
 let App;
 let Edit;
 let Ln;
 
 window.addEventListener( "load", async _=>{
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    App = new Starter( { webgl2:true, grid:false, orbit:false } );
+    const canvas = document.getElementById( 'pgCanvas' );
+
+    App = new Starter( { webgl2:true, grid:false, orbit:false, fullscreen:false, canvas } );
     App.renderer.setClearColor( 0x000000, 0 );
 
     Edit = new Editor( App );
@@ -27,7 +28,7 @@ window.addEventListener( "load", async _=>{
     const geo  = mesh.geometry;
     App.add( mesh );
 
-    previewUVMap( geo );
+    Edit.previewUVMap( geo );
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Orbit is kinda glitchy when sharing Pointer Events with other functions.
@@ -38,217 +39,60 @@ window.addEventListener( "load", async _=>{
     Edit.render();    
 });
 
-function previewUVMap( geo ){
-    const ind   = geo.index.array;
-    const uv    = geo.attributes.uv.array;
-    const w     = 256; 
-    const h     = 256;
-    const size  = new THREE.Vector2( w, h );
-    const can   = new Canvas( "txUV", w, h ).line_width( 1 ).stroke( "#bbbbbb" );
-
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    let a = new THREE.Vector2(), 
-        b = new THREE.Vector2(), 
-        c = new THREE.Vector2();
-
-    for( let i=0; i < ind.length; i+=3 ){
-        a.fromArray( uv, ind[  i  ] * 2 ).multiply( size );
-        b.fromArray( uv, ind[ i+1 ] * 2 ).multiply( size );
-        c.fromArray( uv, ind[ i+2 ] * 2 ).multiply( size );
-
-        can.line( a.x, a.y, b.x, b.y );
-        can.line( b.x, b.y, c.x, c.y );
-        can.line( c.x, c.y, a.x, a.y );
-    }
-}
-
-const ARROW_ROT_OFFSET = new THREE.Quaternion().setFromAxisAngle( new THREE.Vector3( 1,0,0 ), 90 * Math.PI / 180 );
-
-class Editor{
-    constructor( app ){
-        this.app        = app;
-        this.drawTex	= new DrawTexture( "txPreview" );
-        this.fboPixel	= new FboPixel( app.renderer, this.getTexture() );
-
-        this.bRender        = this.render.bind( this );
-        this.bPointerDown   = this.onPointerDown.bind( this );
-        this.bPointerMove   = this.onPointerMove.bind( this );
-        this.bPointerUp     = this.onPointerUp.bind( this );
-
-
-        this.addEvent( "pointerdown", this.bPointerDown );
-
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // Post Rendering
-        this.scene      = new THREE.Scene();
-        this.camera     = new THREE.OrthographicCamera( -1, 1, 1, -1, 0, 1 );
-        /**/
-        this.scene.add(
-            new THREE.Mesh(
-                new THREE.PlaneGeometry( 2, 2 ),
-                new THREE.RawShaderMaterial({
-                    vertexShader    : POST_VERTSRC,
-                    fragmentShader  : POST_FRAGSRC,
-                    uniforms        : {
-                        tColor  : { value: this.fboPixel.target.texture[ 0 ] },
-                        tNorm   : { value: this.fboPixel.target.texture[ 1 ] },
-                        tUv     : { value: this.fboPixel.target.texture[ 2 ] },
-                        tDepth  : { value: this.fboPixel.target.depthTexture },
-                    },
-                })
-            )
-        );
-        
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // Render Things Over Post Rendering
-        this.arrow          = new THREE.ArrowHelper( 
-            new THREE.Vector3(0,0,1),   // Arrow Mesh actually points down.
-            new THREE.Vector3(0,0,0),
-            1, 0x00ffff
-        );
-        this.arrow.visible = false;
-
-        this.afterScene = new THREE.Scene();
-        this.afterScene.add( this.arrow );
-    }
-
-    addEvent( evtName, fn ){ this.app.renderer.domElement.addEventListener( evtName, fn ); }
-    removeEvent( evtName, fn ){ this.app.renderer.domElement.removeEventListener( evtName, fn ); }
-
-    getTexture(){ return this.drawTex.tex; }
-    getDrawShader(){ return this.fboPixel.shader; }
-
-    getEPos( e ){
-        const canvas = this.app.renderer.domElement;
-        return [
-            e.clientX,
-            canvas.clientHeight - 1 - e.clientY, // Invert Y
-        ];
-    }
-
-    pointArrow( px ){
-        this.arrow.position.fromArray( px.pos );
-        this.arrow.quaternion.setFromUnitVectors( new THREE.Vector3(0,0,1), new THREE.Vector3().fromArray( px.norm ) );
-        this.arrow.quaternion.multiply( ARROW_ROT_OFFSET );
-    }
-
-    onPointerDown( e ){
-        e.stopPropagation(); e.preventDefault();
-
-        const pos   = this.getEPos( e );
-        const px    = this.fboPixel.getData( pos[0], pos[1] );
-
-        if( px ){
-            this.app.orbit.enabled      = false;
-            this.app.orbit.enableRotate = false;
-
-            this.drawTex.atUV( px.uv[0], px.uv[1] );
-
-            this.addEvent( "pointermove", this.bPointerMove );
-            this.addEvent( "pointerup", this.bPointerUp );
-
-            this.pointArrow( px );
-            this.arrow.visible = true;
-        }else{
-            this.arrow.visible = false;
-        }
-
-        return false;
-    }
-
-    onPointerMove( e ){
-        const pos   = this.getEPos( e );
-        const px    = this.fboPixel.getData( pos[0], pos[1] );
-        if( px ){
-            this.drawTex.atUV( px.uv[0], px.uv[1] );
-            this.pointArrow( px );
-        }
-    }
-
-    onPointerUp( e ){
-        this.removeEvent( "pointermove", this.bPointerMove );
-        this.removeEvent( "pointerup", this.bPointerUp );
-
-        this.app.orbit.enabled      = true;
-        this.app.orbit.enableRotate = true;
-        this.arrow.visible          = false;
-    }
-
-    render(){
-        requestAnimationFrame( this.bRender );
-
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        this.app.renderer.setRenderTarget( this.fboPixel.target );
-        this.app.renderer.render( this.app.scene, this.app.camera );
-
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        this.app.renderer.setRenderTarget( null );
-        this.app.renderer.render( this.scene, this.camera );
-
-        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        //let gl = this.app.renderer.getContext();
-        //gl.disable( gl.DEPTH_TEST );
-        this.app.renderer.autoClearColor = false;   // Dont clear Frame !!
-        this.app.renderer.render( this.afterScene, this.app.camera );
-        this.app.renderer.autoClearColor = true;    // Reenable clearing
-        //gl.enable( gl.DEPTH_TEST );
-    }
-}
-
-
-const POST_VERTSRC = `#version 300 es
-in vec3 position;
-in vec2 uv;
-
-out vec2 vUv;
-
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-
-void main() {
-    vUv         = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-}`;
-
-const POST_FRAGSRC = `#version 300 es
-precision highp float;
-precision highp int;
-layout(location = 0) out vec4 pc_FragColor;
-in vec2 vUv;
-
-uniform sampler2D tColor;
-uniform sampler2D tNorm;
-uniform sampler2D tUv;
-uniform sampler2D tDepth;
-
-void main(){
-    vec3 diffuse        = texture( tColor, vUv ).rgb;
-    vec3 normal         = texture( tNorm, vUv ).rgb;
-    vec3 uv             = texture( tUv, vUv ).rgb;
-    float depth         = texture( tDepth, vUv ).r;
-
-    pc_FragColor.rgb    = mix( diffuse, normal, step( 0.5, vUv.x ) );
-    pc_FragColor.a      = 1.0;
-
-    pc_FragColor.rgb    = diffuse;
-    //pc_FragColor.rgb    = normal;
-    //pc_FragColor.rgb    = uv;
-    //pc_FragColor.rgb    = vec3( depth );
-}
-`;
 
 </script>
 
 <style>
-    .txPreview{ position:fixed; top:10px; left:10px; border:1px solid black; }
+    canvas{ position:absolute; top:0px; right:0px; }
+    html,body{ margin:0px; padding:0px; width:100%; height:100%; }
+
+    body{
+        display:grid;
+        grid-template-columns   : 1fr 256px;
+        grid-template-rows      : 1ft;
+        grid-template-areas     : "viewer panel";
+        justify-content         : stretch;
+        align-items: stretch;
+    }
+
+    #viewEditor{
+        grid-area   : viewer;
+        position    : relative;
+    }
+
+    #uiPanel{
+        grid-area: panel;
+        background-color:white;
+        display:flex;
+        flex-direction:column;
+    }
+
+    .txPreview{ box-sizing: border-box; position:relative; height:255px; }
     .txPreview canvas{ position:absolute; top:0px; left:0px; }
     .txPreview canvas:nth-child( 2 ){ pointer-events: none; opacity:0.5; }
+
+    prop-stack-panel{ flex:1 1 auto; }
 </style>
 
-<div class="txPreview">
-    <canvas id="txPreview" style="width:256px; height:256px;"></canvas>
-    <canvas id="txUV" style="width:256px; height:256px;"></canvas>
+<div id="viewEditor">
+    <canvas id="pgCanvas"></canvas>
+</div>
+
+<div id="uiPanel">
+    <div class="txPreview">
+        <canvas id="txPreview" style="width:256px; height:256px;"></canvas>
+        <canvas id="txUV" style="width:256px; height:256px;"></canvas>
+    </div>
+    <prop-stack-panel>
+        <span>Brush Color</span>
+        <prop-color-picker id="iBrushColor"></prop-color-picker>
+    
+        <span>Brush Size</span>
+        <prop-input-range id="iBrushSize" min="1" max="10" value="3"></prop-input-range>
+
+        <span>Options</span>
+        <prop-button id="iDLTex" label="Download Texture"></prop-button>
+    </prop-stack-panel>
 </div>
 
 </body></html>
