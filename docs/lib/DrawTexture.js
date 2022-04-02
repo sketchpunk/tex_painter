@@ -4,11 +4,12 @@ import { CanvasTexture }    from "../thirdparty/three.module.js";
 
 class DrawTexture{
     constructor( elmId, width=256, height=256 ){
-        this.canvas = document.getElementById( elmId );
-        this.draw   = new Canvas( this.canvas, width, height ).fill_color( "#ffffff" ).fill( "#ff0000" );
-        this.tex    = new CanvasTexture( this.canvas );
-        this.tex.flipY = false; // Depending on the texture, dont flip it
-        this.brushSize = 3;
+        this.canvas         = document.getElementById( elmId );
+        this.draw           = new Canvas( this.canvas, width, height ).fill_color( "#ffffff" ).fill( "#ff0000" );
+        this.tex            = new CanvasTexture( this.canvas );
+        this.tex.flipY      = false; // Depending on the texture, dont flip it
+        this.brushSize      = 3;
+        this.activeColor    = '#ff0000';
 
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // EVENTS
@@ -19,6 +20,7 @@ class DrawTexture{
 
     setColor( c ){
         this.draw.fill( c );
+        this.activeColor = c;
     }
 
     atPos( x, y ){
@@ -31,6 +33,17 @@ class DrawTexture{
         //const y = this.draw.height  * (1 - v); // Invert y
         const y = this.draw.height  * v; // Invert y
         this.atPos( x, y );
+    }
+
+    clear(){
+        this.draw
+            .fill_color( "#ffffff" )    // Set all pixels to white
+            .fill( this.activeColor );  // Reset color back to the selected color
+        this.tex.needsUpdate = true;    // Texture needs to be uploaded
+    }
+
+    save(){
+        this.draw.download();
     }
 
     onPointerDown( e ){

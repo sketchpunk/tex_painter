@@ -20,8 +20,8 @@ class FboPixel{
         // Build a custom FrameBuffer that will capture information
         // about the model being drawn onto.
         const rt    = new THREE.WebGLMultipleRenderTargets( size.x, size.y, 4 );
-        rt.format   = THREE.RGBAFormat;
-        rt.type     = THREE.FloatType; 
+        rt.texture.format   = THREE.RGBAFormat;
+        rt.texture.type     = THREE.FloatType; 
 
         //-------------------------------
         // Color Buffer : Will see Paint texture results here.

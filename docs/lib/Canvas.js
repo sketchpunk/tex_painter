@@ -484,11 +484,16 @@ class Canvas{
 		];
 	}
 
-	download(){
+	download( fileName='texture.png' ){
 		//Force it to download, instead of view by changing the mime time.
-		var uri = this.canvas.toDataURL().replace("image/png","image/octet-stream");
+		var uri = this.canvas.toDataURL().replace( 'image/png','image/octet-stream' );
+
 		//window.location.href = uri;
-		console.log(uri);
+
+		const lnk = document.createElement( 'a' );
+		lnk.setAttribute( 'download', fileName );
+		lnk.href = uri;
+		lnk.click();
 		return this;
 	}
 

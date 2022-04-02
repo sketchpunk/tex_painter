@@ -58,8 +58,13 @@ export class Editor{
 
     setupUI(){
         document.getElementById( 'iBrushSize' ).addEventListener( 'input', e=>{ this.drawTex.brushSize = e.detail; });
-        document.getElementById( 'iBrushColor' ).addEventListener( 'input', e=>{ this.drawTex.setColor( e.detail ); });
-        document.getElementById( 'iDLTex' ).addEventListener( 'input', e=>{ alert( 'Not Implemented' ); });
+        document.getElementById( 'iBrushColor' ).addEventListener( 'input', e=>this.drawTex.setColor( e.detail ) );
+        document.getElementById( 'iDLTex' ).addEventListener( 'input', _=>this.drawTex.save() );
+        document.getElementById( 'iClear' ).addEventListener( 'input', _=>{ 
+            if( confirm( 'Are you sure you want to clear the texture?' ) ){
+                this.drawTex.clear();
+            }
+        });
     }
     
     addEvent( evtName, fn ){ this.app.renderer.domElement.addEventListener( evtName, fn ); }
