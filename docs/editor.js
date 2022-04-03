@@ -1,7 +1,7 @@
-import Starter, { THREE }   from "./lib/Starter.js";
-import DrawTexture			from "./lib/DrawTexture.js";
-import FboPixel 			from "./lib/FboPixel.js";
-import Canvas               from "./lib/Canvas.js";
+import Starter, { THREE }   from './lib/Starter.js';
+import DrawTexture			from './lib/DrawTexture.js';
+import FboPixel 			from './lib/FboPixel.js';
+import Canvas               from './lib/Canvas.js';
 
 const ARROW_ROT_OFFSET = new THREE.Quaternion().setFromAxisAngle( new THREE.Vector3( 1,0,0 ), 90 * Math.PI / 180 );
 

@@ -1,10 +1,13 @@
 <!DOCTYPE html><html><head><title></title></head><body><script type="module">
-import Starter, { THREE }   from "./lib/Starter.js";
-import GltfUtil             from "./lib/GltfUtil.js";
+import Starter, { THREE }   from './lib/Starter.js';
+import GltfUtil             from './lib/GltfUtil.js';
+import ObjUtil              from './lib/ObjUtil.js';
 import { Editor }           from './editor.js';
 import { 
     PropStackPanel, PropInputRange, PropColorPicker,
 } from './ui/index.js';
+
+
 let App;
 let Edit;
 let Ln;
@@ -24,7 +27,9 @@ window.addEventListener( "load", async _=>{
     App.add( mesh );
     */
     
-    const mesh = await GltfUtil.fetchMesh( "./res/munny.gltf", Edit.getDrawShader() );
+    const mat  = Edit.getDrawShader();
+    //const mesh = await GltfUtil.fetchMesh( './res/munny.gltf', mat );
+    const mesh = await ObjUtil.fetchMesh( './res/cow.obj', mat );
     const geo  = mesh.geometry;
     App.add( mesh );
 
