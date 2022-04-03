@@ -498,6 +498,10 @@ class Canvas{
 	}
 
 	// #endregion //////////////////////////////////////////////////////////////////
+
+	drawImage( img, w, h, x=0, y=0 ){
+		this.ctx.drawImage( img, x, y, w, h );
+	}
 }
 
 export default Canvas;

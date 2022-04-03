@@ -2,6 +2,7 @@
 import Starter, { THREE }   from './lib/Starter.js';
 import GltfUtil             from './lib/GltfUtil.js';
 import ObjUtil              from './lib/ObjUtil.js';
+import ImageLoader          from './lib/ImageLoader.js';
 import { Editor }           from './editor.js';
 import { 
     PropStackPanel, PropInputRange, PropColorPicker,
@@ -34,6 +35,9 @@ window.addEventListener( "load", async _=>{
     App.add( mesh );
 
     Edit.previewUVMap( geo );
+
+    ImageLoader( './res/cow.jpg' )
+        .then( img=>Edit.loadImage( img ) );
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Orbit is kinda glitchy when sharing Pointer Events with other functions.
@@ -96,7 +100,7 @@ window.addEventListener( "load", async _=>{
         <prop-input-range id="iBrushSize" min="1" max="10" value="3"></prop-input-range>
 
         <span>Options</span>
-        <prop-button id="iClear" label="Clear Texture"></prop-button>
+        <prop-button id="iClear" label="Reset Texture"></prop-button>
         <prop-button id="iDLTex" label="Download Texture"></prop-button>
     </prop-stack-panel>
 </div>

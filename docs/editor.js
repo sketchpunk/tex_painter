@@ -8,7 +8,7 @@ const ARROW_ROT_OFFSET = new THREE.Quaternion().setFromAxisAngle( new THREE.Vect
 export class Editor{
     constructor( app ){
         this.app        = app;
-        this.drawTex	= new DrawTexture( "txPreview" );
+        this.drawTex	= new DrawTexture( 'txPreview', 256, 256, true );
         this.fboPixel	= new FboPixel( app.renderer, this.getTexture() );
 
         this.bRender        = this.render.bind( this );
@@ -61,8 +61,8 @@ export class Editor{
         document.getElementById( 'iBrushColor' ).addEventListener( 'input', e=>this.drawTex.setColor( e.detail ) );
         document.getElementById( 'iDLTex' ).addEventListener( 'input', _=>this.drawTex.save() );
         document.getElementById( 'iClear' ).addEventListener( 'input', _=>{ 
-            if( confirm( 'Are you sure you want to clear the texture?' ) ){
-                this.drawTex.clear();
+            if( confirm( 'Are you sure you want to reset the texture?' ) ){
+                this.drawTex.reset();
             }
         });
     }
@@ -72,6 +72,8 @@ export class Editor{
 
     getTexture(){ return this.drawTex.tex; }
     getDrawShader(){ return this.fboPixel.shader; }
+
+    loadImage( img ){ this.drawTex.loadImage( img ); }
 
     getEPos( e ){
         const canvas = this.app.renderer.domElement;
@@ -164,10 +166,23 @@ export class Editor{
             c = new THREE.Vector2();
     
         for( let i=0; i < ind.length; i+=3 ){
-            a.fromArray( uv, ind[  i  ] * 2 ).multiply( size );
-            b.fromArray( uv, ind[ i+1 ] * 2 ).multiply( size );
-            c.fromArray( uv, ind[ i+2 ] * 2 ).multiply( size );
-    
+            // a.fromArray( uv, ind[  i  ] * 2 ).multiply( size );
+            // b.fromArray( uv, ind[ i+1 ] * 2 ).multiply( size );
+            // c.fromArray( uv, ind[ i+2 ] * 2 ).multiply( size );
+            
+            // Invert Y
+            a.fromArray( uv, ind[  i  ] * 2 ); 
+            b.fromArray( uv, ind[ i+1 ] * 2 );
+            c.fromArray( uv, ind[ i+2 ] * 2 );
+            
+            a.y = 1.0 - a.y;
+            b.y = 1.0 - b.y;
+            c.y = 1.0 - c.y;
+
+            a.multiply( size );
+            b.multiply( size );
+            c.multiply( size );
+
             can.line( a.x, a.y, b.x, b.y );
             can.line( b.x, b.y, c.x, c.y );
             can.line( c.x, c.y, a.x, a.y );
