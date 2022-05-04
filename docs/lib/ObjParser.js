@@ -40,6 +40,7 @@ export default class ObjParser{
             }
         }
 
+
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Decompress the data into flat arrays
         this._unpack( faces, vertices, normals, texcoords );
@@ -64,7 +65,7 @@ export default class ObjParser{
     _parseVec( txt, buf, name, size ){
         //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         const ary = txt.split( ' ' );
-        if( ary.length != size ){
+        if( ary.length < size ){
             console.error( name, ' data not the length of', size );
             return;
         }
@@ -105,9 +106,11 @@ export default class ObjParser{
     // Data is compressed, so need to process the face data
     // to decompress the data into nice flat float information.
     _unpack( faces, vertices, normals, texcoords ){
-        const VERT  = 0;
-        const TEX   = 1;
-        const NORM  = 2;
+        const VERT    = 0;
+        const TEX     = 1;
+        const NORM    = 2;
+        const hasTex  = ( texcoords.length > 0 );
+        const hasNorm = ( normals.length > 0 );
 
         let vert, face, i, vi, ti, ni;
         let map     = new Map();    // Track Unique Vertex to Unpacked Vertex Index
@@ -143,10 +146,10 @@ export default class ObjParser{
                 ni   = vert.idx[ NORM ] - 1;
                 ti   = vert.idx[ TEX ]  - 1;
 
-                this.vertices.push( ...vertices[ vi ] );
-                this.normals.push( ...normals[ ni ] );
-                this.texcoords.push( ...texcoords[ ti ] );
                 this.indices.push( vertCnt );
+                this.vertices.push( ...vertices[ vi ] );
+                if( hasNorm ) this.normals.push( ...normals[ ni ] );
+                if( hasTex )  this.texcoords.push( ...texcoords[ ti ] );
 
                 map.set( vert.key, vertCnt ); // Cache this Unique vertex to the actual unpackaged vertex index
                 vertCnt++;
