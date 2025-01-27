@@ -30,14 +30,15 @@ window.addEventListener( "load", async _=>{
     
     const mat  = Edit.getDrawShader();
     //const mesh = await GltfUtil.fetchMesh( './res/munny.gltf', mat );
-    const mesh = await ObjUtil.fetchMesh( './res/cow.obj', mat );
+    //const mesh = await ObjUtil.fetchMesh( './res/cow.obj', mat );
     //const mesh = await ObjUtil.fetchMesh( './res/box.obj', mat );
+    const mesh = await ObjUtil.fetchMesh( './res/girafe.obj', mat );
     const geo  = mesh.geometry;
     App.add( mesh );
 
     Edit.previewUVMap( geo );
 
-    ImageLoader( './res/cow.jpg' )
+    ImageLoader( './res/girafe.jpg' )
         .then( img=>Edit.loadImage( img ) );
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
